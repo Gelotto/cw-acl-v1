@@ -1,27 +1,22 @@
 use crate::error::ContractError;
-use crate::msg::{InstantiateMsg};
-use cosmwasm_std::{DepsMut, Env, MessageInfo};
-use cw_storage_plus::{Item};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use crate::msg::InstantiateMsg;
+use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Storage};
+use cw_storage_plus::Map;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Something {
-  pub value: Option<String>,
-}
-
-pub const SOMETHING: Item<Something> = Item::new("something");
+pub const ADMINS: Map<Addr, bool> = Map::new("admins");
+pub const ACL: Map<(Addr, String), bool> = Map::new("acl");
 
 /// Initialize contract state data.
 pub fn initialize(
-  deps: DepsMut,
-  _env: &Env,
-  _info: &MessageInfo,
-  msg: &InstantiateMsg,
-) -> Result<Something, ContractError> {
-  let something = Something {
-    value: msg.value.clone()
-  };
-  SOMETHING.save(deps.storage, &something)?;
-  Ok(something)
+    deps: DepsMut,
+    _env: &Env,
+    info: &MessageInfo,
+    _msg: &InstantiateMsg,
+) -> Result<(), ContractError> {
+    ADMINS.save(deps.storage, info.sender.clone(), &true)?;
+    Ok(())
+}
+
+pub fn is_admin(storage: &mut dyn Storage, addr: &Addr) -> bool {
+    ADMINS.has(storage, addr.clone())
 }

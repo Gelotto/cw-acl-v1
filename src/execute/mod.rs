@@ -1,3 +1,3 @@
-mod do_something;
+mod authorize;
 
-pub use do_something::do_something;
+pub use authorize::authorize;

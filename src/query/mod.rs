@@ -1,3 +1,3 @@
-mod get_something;
+mod is_authorized;
 
-pub use get_something::get_something;
+pub use is_authorized::is_authorized;
