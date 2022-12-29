@@ -22,6 +22,8 @@ pub enum ExecuteMsg {
   UnsetSuperuser { admin_address: Addr },
   AddAdmin { address: Addr, as_superuser: Option<bool> },
   RemoveAdmin { admin_address: Addr },
+  GrantRoles { principal: Addr, roles: Vec<u32> },
+  RevokeRoles { principal: Addr, roles: Vec<u32> },
 }
 
 /// Custom contract query endpoints.
@@ -32,6 +34,7 @@ pub enum QueryMsg {
   IsRoleAllowed { role: u32, action: String },
   IsAdmin { address: Addr },
   IsSuperuser { address: Addr },
+  HasRoles { principal: Addr, roles: Vec<u32> },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

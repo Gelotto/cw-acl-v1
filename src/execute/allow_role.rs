@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
   error::ContractError,
-  state::{is_admin, ROLES},
+  state::{is_admin, ROLE_ACTIONS},
 };
 use cosmwasm_std::{attr, DepsMut, Env, MessageInfo, Response};
 
@@ -19,7 +19,7 @@ pub fn allow_role(
 
   deps.api.debug(&format!("ACL allow role {} to {}", role, action));
 
-  ROLES.update(
+  ROLE_ACTIONS.update(
     deps.storage,
     role,
     |some_actions| -> Result<HashSet<String>, ContractError> {

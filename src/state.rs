@@ -7,7 +7,8 @@ use cw_storage_plus::Map;
 
 pub const ADMINS: Map<Addr, Admin> = Map::new("admins");
 pub const ACL: Map<(Addr, String), bool> = Map::new("acl");
-pub const ROLES: Map<u32, HashSet<String>> = Map::new("roles");
+pub const ROLES: Map<Addr, HashSet<u32>> = Map::new("roles");
+pub const ROLE_ACTIONS: Map<u32, HashSet<String>> = Map::new("role_actions");
 
 /// Initialize contract state data.
 pub fn initialize(

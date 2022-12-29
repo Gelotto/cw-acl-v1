@@ -3,7 +3,9 @@ mod allow;
 mod allow_role;
 mod disallow;
 mod disallow_role;
+mod grant_roles;
 mod remove_admin;
+mod revoke_roles;
 mod set_superuser;
 mod unset_superuser;
 
@@ -12,6 +14,8 @@ pub use allow::allow;
 pub use allow_role::allow_role;
 pub use disallow::disallow;
 pub use disallow_role::disallow_role;
+pub use grant_roles::grant_roles;
 pub use remove_admin::remove_admin;
+pub use revoke_roles::revoke_roles;
 pub use set_superuser::set_superuser;
 pub use unset_superuser::unset_superuser;

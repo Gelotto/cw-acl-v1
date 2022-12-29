@@ -1,6 +1,6 @@
 use crate::{
   error::ContractError,
-  state::{is_admin, ROLES},
+  state::{is_admin, ROLE_ACTIONS},
 };
 use cosmwasm_std::{attr, DepsMut, Env, MessageInfo, Response};
 
@@ -17,9 +17,9 @@ pub fn disallow_role(
 
   deps.api.debug(&format!("ACL disallow role {} to {}", role, action));
 
-  if let Some(mut actions) = ROLES.may_load(deps.storage, role)? {
+  if let Some(mut actions) = ROLE_ACTIONS.may_load(deps.storage, role)? {
     actions.remove(action);
-    ROLES.save(deps.storage, role, &actions)?;
+    ROLE_ACTIONS.save(deps.storage, role, &actions)?;
   }
 
   Ok(Response::new().add_attributes(vec![

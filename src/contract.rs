@@ -1,10 +1,11 @@
 #[cfg(not(feature = "library"))]
 use crate::error::ContractError;
 use crate::execute::{
-  add_admin, allow, allow_role, disallow, disallow_role, remove_admin, set_superuser, unset_superuser,
+  add_admin, allow, allow_role, disallow, disallow_role, grant_roles, remove_admin, revoke_roles, set_superuser,
+  unset_superuser,
 };
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::query::{is_admin, is_allowed, is_role_allowed, is_superuser};
+use crate::query::{has_roles, is_admin, is_allowed, is_role_allowed, is_superuser};
 use crate::state;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
@@ -41,6 +42,8 @@ pub fn execute(
     ExecuteMsg::AddAdmin { address, as_superuser } => add_admin(deps, env, info, &address, as_superuser),
     ExecuteMsg::SetSuperuser { admin_address } => set_superuser(deps, env, info, &admin_address),
     ExecuteMsg::UnsetSuperuser { admin_address } => unset_superuser(deps, env, info, &admin_address),
+    ExecuteMsg::GrantRoles { principal, roles } => grant_roles(deps, env, info, &principal, &roles),
+    ExecuteMsg::RevokeRoles { principal, roles } => revoke_roles(deps, env, info, &principal, &roles),
   }
 }
 
@@ -55,6 +58,7 @@ pub fn query(
     QueryMsg::IsRoleAllowed { role, action } => to_binary(&is_role_allowed(deps, role, &action)?),
     QueryMsg::IsAdmin { address } => to_binary(&is_admin(deps, &address)?),
     QueryMsg::IsSuperuser { address } => to_binary(&is_superuser(deps, &address)?),
+    QueryMsg::HasRoles { principal, roles } => to_binary(&has_roles(deps, &principal, &roles)?),
   }?;
   Ok(result)
 }
