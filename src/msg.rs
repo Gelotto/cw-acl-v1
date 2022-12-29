@@ -7,6 +7,7 @@ use crate::models::Authorization;
 /// Initial contract state.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
+  pub admins: Option<Vec<Addr>>,
   pub authorizations: Option<Vec<Authorization>>,
 }
 

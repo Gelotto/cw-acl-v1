@@ -7,8 +7,8 @@ use cw_storage_plus::Map;
 
 pub const ADMINS: Map<Addr, Admin> = Map::new("admins");
 pub const ACL: Map<(Addr, String), bool> = Map::new("acl");
-pub const ROLES: Map<Addr, HashSet<u32>> = Map::new("roles");
 pub const ROLE_ACTIONS: Map<u32, HashSet<String>> = Map::new("role_actions");
+pub const ROLES: Map<Addr, HashSet<u32>> = Map::new("roles");
 
 /// Initialize contract state data.
 pub fn initialize(
@@ -17,12 +17,19 @@ pub fn initialize(
   info: &MessageInfo,
   msg: &InstantiateMsg,
 ) -> Result<(), ContractError> {
-  deps
-    .api
-    .debug(&format!("ACL instantiating with initial admin {}", &info.sender));
-
+  // allways save tx sender as initial superuser admin
   ADMINS.save(deps.storage, info.sender.clone(), &Admin { is_superuser: true })?;
 
+  // initialize admin authorities
+  if let Some(admins) = msg.admins.clone() {
+    for addr in admins.iter() {
+      if *addr != info.sender {
+        ADMINS.save(deps.storage, addr.clone(), &Admin { is_superuser: false })?;
+      }
+    }
+  }
+
+  // perform initial ACL authorizations
   if let Some(authorizations) = msg.authorizations.clone() {
     for auth in authorizations.iter() {
       for action in auth.actions.iter() {
