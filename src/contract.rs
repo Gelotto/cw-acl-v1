@@ -1,8 +1,10 @@
 #[cfg(not(feature = "library"))]
 use crate::error::ContractError;
-use crate::execute;
+use crate::execute::{
+  add_admin, allow, allow_role, disallow, disallow_role, remove_admin, set_superuser, unset_superuser,
+};
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::query::is_authorized;
+use crate::query::{is_admin, is_allowed, is_role_allowed, is_superuser};
 use crate::state;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
@@ -13,36 +15,46 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: InstantiateMsg,
+  deps: DepsMut,
+  env: Env,
+  info: MessageInfo,
+  msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    state::initialize(deps, &env, &info, &msg)?;
-    Ok(Response::new().add_attribute("action", "instantiate"))
+  set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+  state::initialize(deps, &env, &info, &msg)?;
+  Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
+  deps: DepsMut,
+  env: Env,
+  info: MessageInfo,
+  msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    match msg {
-        ExecuteMsg::Authorize { principal, action } => {
-            execute::authorize(deps, env, info, &principal, &action)
-        }
-    }
+  match msg {
+    ExecuteMsg::Allow { principal, action } => allow(deps, env, info, &principal, &action),
+    ExecuteMsg::Disallow { principal, action } => disallow(deps, env, info, &principal, &action),
+    ExecuteMsg::DisallowRole { role, action } => disallow_role(deps, env, info, role, &action),
+    ExecuteMsg::AllowRole { role, action } => allow_role(deps, env, info, role, &action),
+    ExecuteMsg::RemoveAdmin { admin_address } => remove_admin(deps, env, info, &admin_address),
+    ExecuteMsg::AddAdmin { address, as_superuser } => add_admin(deps, env, info, &address, as_superuser),
+    ExecuteMsg::SetSuperuser { admin_address } => set_superuser(deps, env, info, &admin_address),
+    ExecuteMsg::UnsetSuperuser { admin_address } => unset_superuser(deps, env, info, &admin_address),
+  }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    let result = match msg {
-        QueryMsg::IsAuthorized { principal, action } => {
-            to_binary(&is_authorized(deps, &principal, &action)?)
-        }
-    }?;
-    Ok(result)
+pub fn query(
+  deps: Deps,
+  _env: Env,
+  msg: QueryMsg,
+) -> StdResult<Binary> {
+  let result = match msg {
+    QueryMsg::IsAllowed { principal, action } => to_binary(&is_allowed(deps, &principal, &action)?),
+    QueryMsg::IsRoleAllowed { role, action } => to_binary(&is_role_allowed(deps, role, &action)?),
+    QueryMsg::IsAdmin { address } => to_binary(&is_admin(deps, &address)?),
+    QueryMsg::IsSuperuser { address } => to_binary(&is_superuser(deps, &address)?),
+  }?;
+  Ok(result)
 }

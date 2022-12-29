@@ -14,7 +14,7 @@ deploy:
 
 # instantiate last contract to be deployed using code ID in release dir code-id file
 instantiate:
-	./bin/instantiate $(network) $(sender) $(value)
+	./bin/instantiate $(network) $(sender)
 
 # run all unit tests
 test:
@@ -28,8 +28,8 @@ schemas:
 validator:
 	./bin/validator
 
-do-something:
-	./client.sh do-something $(network) $(contract_addr_filepath) $(sender) $(value)
+authorize:
+	./client.sh authorize $(network) $(contract_addr_filepath) $(sender) $(principal) $(action)
 
-get-something:
-	./client.sh get-something $(network) $(contract_addr_filepath) $(sender)
+is-authorized:
+	./client.sh is-authorized $(network) $(contract_addr_filepath) $(sender) $(principal) $(action)

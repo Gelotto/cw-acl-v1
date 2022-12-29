@@ -1,6 +1,6 @@
 [package]
 name = "cw-acl"
-version = "0.14.0"
+version = "0.0.1"
 authors = []
 edition = "2018"
 description = "General Purpose ACL Smart Contract"
@@ -39,4 +39,4 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.23" }
 
 [dev-dependencies]
-cw-multi-test = { version = "0.14.0" }
+cw-multi-test = { version = "0.16.1" }

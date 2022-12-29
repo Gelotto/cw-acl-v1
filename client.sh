@@ -28,10 +28,11 @@ case $NETWORK in
 esac
 
 
-do_something() {
+authorize() {
   sender=$1
-  value=$2
-  msg='{"do_something":{"value":"'$value'"}}'
+  principal=$2
+  action=$3
+  msg='{"authorize":{"principal":"'$principal'","action":"'$action'"}}'
   flags="\
   --node $NODE \
   --gas-prices 0.025$DENOM \
@@ -43,14 +44,16 @@ do_something() {
   --output json \
   -y \
   "
-  echo junod tx wasm execute $CONTRACT_ADDR "$msg" "$flags"
-  response=$(junod tx wasm execute "$CONTRACT_ADDR" "$msg" $flags)
+  echo junod tx wasm execute $CONTRACT_ADDR "'"$msg"'" "$flags"
+  response=$(junod tx wasm execute "$CONTRACT_ADDR" $msg $flags)
   echo $response | ./bin/utils/base64-decode-attributes | jq
 }
 
 
-get_something() {
-  query='{"get_something":{}}'
+is_authorized() {
+  principal=$2
+  action=$3
+  query='{"is_authorized":{"principal":"'$principal'","action":"'$action'"}}'
   flags="--chain-id $CHAIN_ID --output json --node $NODE"
   echo junod query wasm contract-state smart $CONTRACT_ADDR "$query" $flags
   response=$(junod query wasm contract-state smart $CONTRACT_ADDR "$query" $flags)
@@ -61,10 +64,10 @@ set -e
 
 echo $*
 case $CMD in
-  do-something)
-    do_something $1 $2
+  authorize)
+    authorize $1 $2 $3
     ;;
-  get-something) 
-    get_something
+  is-authorized) 
+    is_authorized $1 $2 $3
     ;;
 esac
