@@ -1,4 +1,3 @@
-#[cfg(not(feature = "library"))]
 use crate::error::ContractError;
 use crate::execute::{
   add_admin, allow, allow_role, disallow, disallow_role, grant_roles, remove_admin, revoke_roles, set_superuser,
@@ -14,7 +13,7 @@ use cw2::set_contract_version;
 const CONTRACT_NAME: &str = "crates.io:cw-acl";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn instantiate(
   deps: DepsMut,
   env: Env,
@@ -26,7 +25,7 @@ pub fn instantiate(
   Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn execute(
   deps: DepsMut,
   env: Env,
@@ -47,7 +46,7 @@ pub fn execute(
   }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn query(
   deps: Deps,
   _env: Env,

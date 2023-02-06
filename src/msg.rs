@@ -1,19 +1,15 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::models::Authorization;
 
-/// Initial contract state.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
   pub admins: Option<Vec<Addr>>,
   pub authorizations: Option<Vec<Authorization>>,
 }
 
-/// Executable contract endpoints.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
   Allow { principal: Addr, action: String },
   Disallow { principal: Addr, action: String },
@@ -27,9 +23,7 @@ pub enum ExecuteMsg {
   RevokeRoles { principal: Addr, roles: Vec<u32> },
 }
 
-/// Custom contract query endpoints.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum QueryMsg {
   IsAllowed { principal: Addr, action: String },
   IsRoleAllowed { role: u32, action: String },
@@ -38,7 +32,7 @@ pub enum QueryMsg {
   HasRoles { principal: Addr, roles: Vec<u32> },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct BooleanResponse {
   pub value: bool,
 }
