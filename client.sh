@@ -2,10 +2,16 @@
 
 CMD=$1
 NETWORK=$2
-CONTRACT_ADDR=$(cat $3)
 NODE=
 CHAIN_ID=
 FLAGS=
+
+TAG=$3
+if [ -z "$TAG" ]; then
+  TAG=$(cat ./builds/latest)
+fi
+
+CONTRACT_ADDR=$(cat ./builds/build-$TAG/latest-contract)
 
 shift 3
 
@@ -16,7 +22,7 @@ case $NETWORK in
     DENOM=ujunox
     ;;
   mainnet)
-    NODE="https://rpc-juno.itastakers.com",
+    NODE="https://rpc-juno.itastakers.com:443"
     CHAIN_ID=juno-1
     DENOM=ujuno
     ;;
@@ -28,18 +34,18 @@ case $NETWORK in
 esac
 
 
-authorize() {
+allow() {
   sender=$1
   principal=$2
   action=$3
-  msg='{"authorize":{"principal":"'$principal'","action":"'$action'"}}'
+  msg='{"allow":{"principal":"'$principal'","action":"'$action'"}}'
   flags="\
   --node $NODE \
   --gas-prices 0.025$DENOM \
   --chain-id $CHAIN_ID \
   --from $sender \
   --gas auto \
-  --gas-adjustment 1.5 \
+  --gas-adjustment 1.3 \
   --broadcast-mode block \
   --output json \
   -y \
@@ -64,8 +70,8 @@ set -e
 
 echo $*
 case $CMD in
-  authorize)
-    authorize $1 $2 $3
+  allow)
+    allow $1 $2 $3
     ;;
   is-authorized) 
     is_authorized $1 $2 $3

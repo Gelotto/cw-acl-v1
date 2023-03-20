@@ -2,16 +2,20 @@
 
 NETWORK=$1
 SENDER=$2
-LABEL="ACL-$(date +%s)"
-RELEASE_DIR="./release"
-FILE_TX_HASH="tx_hash.txt"
-FILE_CONTRACT_ADDR="contract_addr.txt"
-FILE_CODE_ID="code_id.txt"
-CODE_ID=$(cat $RELEASE_DIR/$FILE_CODE_ID)
+SOME_VALUE=$3
+LABEL="contract-$(date +%s)"
+BUILD_DIR="./builds/build-$(cat ./builds/latest)"
+FILE_TX_HASH="tx"
+FILE_CODE_ID="code-id"
+
+echo "using build dir $BUILD_DIR"
+CODE_ID=$(cat $BUILD_DIR/$FILE_CODE_ID)
+
 INSTANTIATE_MSG='{}'
 
 case $NETWORK in
   devnet)
+    set -e
     NODE="http://localhost:26657"
     DENOM=ujunox
     CHAIN_ID=testing
@@ -22,7 +26,7 @@ case $NETWORK in
     CHAIN_ID=uni-3
     ;;
   mainnet)
-    NODE="https://rpc-juno.itastakers.com"
+    NODE="https://rpc-juno.itastakers.com:443"
     DENOM=ujuno
     CHAIN_ID=juno-1
     ;;
@@ -39,7 +43,7 @@ instantiate() {
 
     TXHASH=$(echo "$RESULT" | jq -r '.txhash')
     
-    echo $TXHASH >$RELEASE_DIR/$FILE_TX_HASH
+    echo $TXHASH >$BUILD_DIR/$FILE_TX_HASH
     echo "waiting for transaction to finalize..."
 
     CONTRACT_ADDR=""
@@ -50,8 +54,14 @@ instantiate() {
             | jq -r '.logs[0].events[0].attributes[0].value')
     done
 
+    SHORT_ADDR=$(echo $CONTRACT_ADDR | grep -Po '\w{7}$')
+    CONTRACTS_DIR="$BUILD_DIR/contracts"
+
+    mkdir -p "$CONTRACTS_DIR"
+
     echo "contract address: $CONTRACT_ADDR"
-    echo $CONTRACT_ADDR >$RELEASE_DIR/$FILE_CONTRACT_ADDR
+    echo $CONTRACT_ADDR >$CONTRACTS_DIR/$SHORT_ADDR
+    echo $CONTRACT_ADDR >$BUILD_DIR/latest-contract
 }
 
 instantiate
