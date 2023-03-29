@@ -1,14 +1,14 @@
-use cosmwasm_std::{Deps, StdResult};
+use cosmwasm_std::Deps;
 
-use crate::{msg::BooleanResponse, state::ROLE_ACTIONS};
+use crate::{error::ContractError, msg::BooleanResponse, state::ROLE_ACTIONS};
 
 pub fn is_role_allowed(
   deps: Deps,
-  role: u32,
+  role: &String,
   action: &String,
-) -> StdResult<BooleanResponse> {
+) -> Result<BooleanResponse, ContractError> {
   Ok(BooleanResponse {
-    value: match ROLE_ACTIONS.may_load(deps.storage, role)? {
+    value: match ROLE_ACTIONS.may_load(deps.storage, role.clone())? {
       Some(actions) => actions.contains(action),
       None => false,
     },

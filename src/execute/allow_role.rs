@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
   error::ContractError,
-  state::{is_admin, ROLE_ACTIONS},
+  state::{is_allowed, ROLE_ACTIONS},
 };
 use cosmwasm_std::{attr, DepsMut, Env, MessageInfo, Response};
 
@@ -10,10 +10,10 @@ pub fn allow_role(
   deps: DepsMut,
   _env: Env,
   info: MessageInfo,
-  role: u32,
+  role: &String,
   action: &String,
 ) -> Result<Response, ContractError> {
-  if !is_admin(deps.storage, &info.sender) {
+  if !is_allowed(&deps.as_ref(), &info.sender, "allow_role")? {
     return Err(ContractError::NotAuthorized {});
   }
 
@@ -21,10 +21,12 @@ pub fn allow_role(
 
   ROLE_ACTIONS.update(
     deps.storage,
-    role,
+    role.clone(),
     |some_actions| -> Result<HashSet<String>, ContractError> {
       if let Some(mut actions) = some_actions {
-        actions.insert(action.clone());
+        if !actions.contains(action) {
+          actions.insert(action.clone());
+        }
         Ok(actions)
       } else {
         let mut actions = HashSet::with_capacity(1);

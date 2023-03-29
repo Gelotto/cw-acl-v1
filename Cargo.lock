@@ -185,10 +185,11 @@ dependencies = [
 
 [[package]]
 name = "cw-acl"
-version = "0.0.1"
+version = "0.0.3"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-lib",
  "cw-multi-test",
  "cw-storage-plus",
  "cw-utils",
@@ -197,6 +198,20 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "cw-lib"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw20",
+ "schemars",
+ "serde",
+ "sha2 0.10.5",
 ]
 
 [[package]]

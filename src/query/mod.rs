@@ -1,11 +1,11 @@
 mod has_roles;
-mod is_admin;
 mod is_allowed;
+mod is_denied;
 mod is_role_allowed;
-mod is_superuser;
+mod select;
 
 pub use has_roles::has_roles;
-pub use is_admin::is_admin;
 pub use is_allowed::is_allowed;
+pub use is_denied::is_denied;
 pub use is_role_allowed::is_role_allowed;
-pub use is_superuser::is_superuser;
+pub use select::select;

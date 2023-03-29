@@ -4,20 +4,18 @@ use crate::{
 };
 use cosmwasm_std::{attr, Addr, DepsMut, Env, MessageInfo, Response};
 
-pub fn allow(
+pub fn deny(
   deps: DepsMut,
   _env: Env,
   info: MessageInfo,
   principal: &Addr,
   action: &String,
 ) -> Result<Response, ContractError> {
-  if !is_allowed(&deps.as_ref(), &info.sender, "allow")? {
+  if !is_allowed(&deps.as_ref(), &info.sender, "deny")? {
     return Err(ContractError::NotAuthorized {});
   }
 
-  deps
-    .api
-    .debug(&format!("ACL allow address {} to {}", principal, action));
+  deps.api.debug(&format!("ACL deny address {} to {}", principal, action));
 
   let mut do_increment = false;
 
@@ -28,7 +26,7 @@ pub fn allow(
       if maybe_value.is_none() {
         do_increment = true;
       }
-      Ok(true)
+      Ok(false)
     },
   )?;
 
@@ -37,8 +35,8 @@ pub fn allow(
   }
 
   Ok(Response::new().add_attributes(vec![
-    attr("action", "allow"),
+    attr("action", "deny"),
     attr("principal", principal.to_string()),
-    attr("allow_action", action),
+    attr("deny_action", action),
   ]))
 }

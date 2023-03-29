@@ -2,8 +2,9 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 
 #[cw_serde]
-pub struct Admin {
-  pub is_superuser: bool,
+pub enum Admin {
+  Owner(Addr),
+  Acl(Addr),
 }
 
 #[cw_serde]

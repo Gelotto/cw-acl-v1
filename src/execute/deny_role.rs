@@ -1,30 +1,32 @@
 use crate::{
   error::ContractError,
-  state::{is_admin, ROLE_ACTIONS},
+  state::{is_allowed, ROLE_ACTIONS},
 };
 use cosmwasm_std::{attr, DepsMut, Env, MessageInfo, Response};
 
-pub fn disallow_role(
+pub fn deny_role(
   deps: DepsMut,
   _env: Env,
   info: MessageInfo,
-  role: u32,
+  role: &String,
   action: &String,
 ) -> Result<Response, ContractError> {
-  if !is_admin(deps.storage, &info.sender) {
+  if !is_allowed(&deps.as_ref(), &info.sender, "deny_role")? {
     return Err(ContractError::NotAuthorized {});
   }
 
   deps.api.debug(&format!("ACL disallow role {} to {}", role, action));
 
-  if let Some(mut actions) = ROLE_ACTIONS.may_load(deps.storage, role)? {
-    actions.remove(action);
-    ROLE_ACTIONS.save(deps.storage, role, &actions)?;
+  if let Some(mut actions) = ROLE_ACTIONS.may_load(deps.storage, role.clone())? {
+    let was_removed = actions.remove(action);
+    if was_removed {
+      ROLE_ACTIONS.save(deps.storage, role.clone(), &actions)?;
+    }
   }
 
   Ok(Response::new().add_attributes(vec![
-    attr("action", "disallow_role"),
+    attr("action", "deny_role"),
     attr("role", role.to_string()),
-    attr("disallow_action", action),
+    attr("deny_action", action),
   ]))
 }

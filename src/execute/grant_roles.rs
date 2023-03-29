@@ -2,7 +2,7 @@ use std::{collections::HashSet, iter::FromIterator};
 
 use crate::{
   error::ContractError,
-  state::{is_admin, ROLES},
+  state::{is_allowed, ROLES, ROLE_ACTIONS},
 };
 use cosmwasm_std::{attr, Addr, DepsMut, Env, MessageInfo, Response};
 
@@ -11,23 +11,21 @@ pub fn grant_roles(
   _env: Env,
   info: MessageInfo,
   principal: &Addr,
-  roles: &Vec<u32>,
+  roles: &Vec<String>,
 ) -> Result<Response, ContractError> {
-  if !is_admin(deps.storage, &info.sender) {
+  if !is_allowed(&deps.as_ref(), &info.sender, "grant_roles")? {
     return Err(ContractError::NotAuthorized {});
   }
 
-  deps
-    .api
-    .debug(&format!("ACL grant address {} roles {:?}", principal, roles));
+  deps.api.debug(&format!("ACL grant roles {:?} to {}", roles, principal));
 
   ROLES.update(
     deps.storage,
     principal.clone(),
-    |some_roles| -> Result<HashSet<u32>, ContractError> {
-      if let Some(mut stored_roles) = some_roles {
+    |maybe_roles| -> Result<HashSet<String>, ContractError> {
+      if let Some(mut stored_roles) = maybe_roles {
         roles.iter().for_each(|role| {
-          stored_roles.insert(*role);
+          stored_roles.insert(role.clone());
         });
         Ok(stored_roles)
       } else {
@@ -35,6 +33,14 @@ pub fn grant_roles(
       }
     },
   )?;
+
+  for role in roles.iter() {
+    ROLE_ACTIONS.update(
+      deps.storage,
+      role.clone(),
+      |maybe_action_set| -> Result<_, ContractError> { Ok(maybe_action_set.unwrap_or(HashSet::new())) },
+    )?;
+  }
 
   Ok(Response::new().add_attributes(vec![
     attr("action", "grant_roles"),

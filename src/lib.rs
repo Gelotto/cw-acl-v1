@@ -1,11 +1,9 @@
-#[cfg(feature = "library")]
-pub mod client;
-
 #[cfg(not(feature = "library"))]
 pub mod contract;
 
 mod error;
 
+pub mod client;
 pub mod execute;
 pub mod models;
 pub mod msg;
