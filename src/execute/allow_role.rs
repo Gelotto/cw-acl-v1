@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
   error::ContractError,
-  state::{is_allowed, ROLE_ACTIONS},
+  state::{ensure_sender_is_allowed, ROLE_ACTIONS},
 };
 use cosmwasm_std::{attr, DepsMut, Env, MessageInfo, Response};
 
@@ -10,12 +10,10 @@ pub fn allow_role(
   deps: DepsMut,
   _env: Env,
   info: MessageInfo,
-  role: &String,
-  action: &String,
+  role: String,
+  action: String,
 ) -> Result<Response, ContractError> {
-  if !is_allowed(&deps.as_ref(), &info.sender, "allow_role")? {
-    return Err(ContractError::NotAuthorized {});
-  }
+  ensure_sender_is_allowed(&deps.as_ref(), &info.sender, "allow_role")?;
 
   deps.api.debug(&format!("ACL allow role {} to {}", role, action));
 
@@ -24,7 +22,7 @@ pub fn allow_role(
     role.clone(),
     |some_actions| -> Result<HashSet<String>, ContractError> {
       if let Some(mut actions) = some_actions {
-        if !actions.contains(action) {
+        if !actions.contains(&action) {
           actions.insert(action.clone());
         }
         Ok(actions)

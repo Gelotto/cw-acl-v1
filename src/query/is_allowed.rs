@@ -3,7 +3,7 @@ use cosmwasm_std::{Addr, Deps};
 use crate::{
   error::ContractError,
   msg::BooleanResponse,
-  state::{ACL, ROLES, ROLE_ACTIONS},
+  state::{ALLOWED_ACTIONS, ROLES, ROLE_ACTIONS},
 };
 
 pub fn is_allowed(
@@ -14,7 +14,7 @@ pub fn is_allowed(
   // first check if the action has been allowed to prinipal directly
   let mut resp: BooleanResponse = BooleanResponse { value: false };
 
-  if let Some(is_allowed) = ACL.may_load(deps.storage, (principal.clone(), action.clone()))? {
+  if let Some(is_allowed) = ALLOWED_ACTIONS.may_load(deps.storage, (principal.clone(), action.clone()))? {
     resp.value = is_allowed;
   } else {
     // if not, check if the action is authorized via one of principal's roles.

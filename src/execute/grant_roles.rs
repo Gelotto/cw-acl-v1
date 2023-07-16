@@ -2,7 +2,7 @@ use std::{collections::HashSet, iter::FromIterator};
 
 use crate::{
   error::ContractError,
-  state::{is_allowed, ROLES, ROLE_ACTIONS},
+  state::{ensure_sender_is_allowed, ROLES, ROLE_ACTIONS},
 };
 use cosmwasm_std::{attr, Addr, DepsMut, Env, MessageInfo, Response};
 
@@ -10,12 +10,10 @@ pub fn grant_roles(
   deps: DepsMut,
   _env: Env,
   info: MessageInfo,
-  principal: &Addr,
-  roles: &Vec<String>,
+  principal: Addr,
+  roles: Vec<String>,
 ) -> Result<Response, ContractError> {
-  if !is_allowed(&deps.as_ref(), &info.sender, "grant_roles")? {
-    return Err(ContractError::NotAuthorized {});
-  }
+  ensure_sender_is_allowed(&deps.as_ref(), &info.sender, "grant_roles")?;
 
   deps.api.debug(&format!("ACL grant roles {:?} to {}", roles, principal));
 

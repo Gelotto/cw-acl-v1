@@ -1,11 +1,12 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
+use cw_lib::models::Owner;
 
-use crate::models::{Admin, Authorization};
+use crate::models::Authorization;
 
 #[cw_serde]
 pub struct InstantiateMsg {
-  pub admin: Admin,
+  pub owner: Owner,
   pub authorizations: Option<Vec<Authorization>>,
 }
 
@@ -18,6 +19,8 @@ pub enum ExecuteMsg {
   RevokeRoles { principal: Addr, roles: Vec<String> },
   AllowRole { role: String, action: String },
   RevokeRole { role: String, action: String },
+  Open { action: String },
+  Restrict { action: String },
 }
 
 #[cw_serde]
@@ -49,15 +52,15 @@ pub struct BooleanResponse {
 }
 
 #[cw_serde]
-pub struct WalletSelectData {
+pub struct Account {
   pub actions: Vec<String>,
   pub roles: Vec<String>,
 }
 
 #[cw_serde]
 pub struct SelectResponse {
-  pub admin: Option<Admin>,
+  pub owner: Option<Owner>,
   pub actions: Option<Vec<(String, u32)>>,
   pub roles: Option<Vec<(String, Vec<String>)>>,
-  pub wallet: Option<WalletSelectData>,
+  pub account: Option<Account>,
 }

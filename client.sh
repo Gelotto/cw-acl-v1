@@ -55,6 +55,47 @@ allow() {
   echo $response | ./bin/utils/base64-decode-attributes | jq
 }
 
+allow-role() {
+  sender=$1
+  role=$2
+  action=$3
+  msg='{"allow_role":{"role":"'$role'","action":"'$action'"}}'
+  flags="\
+  --node $NODE \
+  --gas-prices 0.025$DENOM \
+  --chain-id $CHAIN_ID \
+  --from $sender \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  --broadcast-mode block \
+  --output json \
+  -y \
+  "
+  echo junod tx wasm execute $CONTRACT_ADDR "'"$msg"'" "$flags"
+  response=$(junod tx wasm execute "$CONTRACT_ADDR" $msg $flags)
+  echo $response | ./bin/utils/base64-decode-attributes | jq
+}
+
+grant-role() {
+  sender=$1
+  principal=$2
+  action=$3
+  msg='{"grant_roles":{"principal":"'$principal'","roles":["'$role'"]}}'
+  flags="\
+  --node $NODE \
+  --gas-prices 0.025$DENOM \
+  --chain-id $CHAIN_ID \
+  --from $sender \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  --broadcast-mode block \
+  --output json \
+  -y \
+  "
+  echo junod tx wasm execute $CONTRACT_ADDR "'"$msg"'" "$flags"
+  response=$(junod tx wasm execute "$CONTRACT_ADDR" $msg $flags)
+  echo $response | ./bin/utils/base64-decode-attributes | jq
+}
 
 is_authorized() {
   principal=$2
@@ -72,6 +113,12 @@ echo $*
 case $CMD in
   allow)
     allow $1 $2 $3
+    ;;
+  allow-role)
+    allow-role $1 $2 $3
+    ;;
+  grant-role)
+    grant-role $1 $2 $3
     ;;
   is-authorized) 
     is_authorized $1 $2 $3

@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Deps};
 
-use crate::{error::ContractError, msg::BooleanResponse, state::ACL};
+use crate::{error::ContractError, msg::BooleanResponse, state::ALLOWED_ACTIONS};
 
 pub fn is_denied(
   deps: Deps,
@@ -9,7 +9,7 @@ pub fn is_denied(
 ) -> Result<BooleanResponse, ContractError> {
   let mut resp: BooleanResponse = BooleanResponse { value: false };
 
-  if let Some(is_allowed) = ACL.may_load(deps.storage, (principal.clone(), action.clone()))? {
+  if let Some(is_allowed) = ALLOWED_ACTIONS.may_load(deps.storage, (principal.clone(), action.clone()))? {
     resp.value = !is_allowed;
   }
   Ok(resp)

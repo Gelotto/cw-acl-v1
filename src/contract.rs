@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::execute::{allow, allow_role, deny, deny_role, grant_roles, revoke, revoke_roles};
+use crate::execute::{allow, allow_role, deny, deny_role, grant_roles, open, restrict, revoke, revoke_roles};
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::query::{has_roles, is_allowed, is_role_allowed, select};
 use crate::state;
@@ -30,13 +30,15 @@ pub fn execute(
   msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
   match msg {
-    ExecuteMsg::Allow { principal, action } => allow(deps, env, info, &principal, &action),
-    ExecuteMsg::Deny { principal, action } => deny(deps, env, info, &principal, &action),
-    ExecuteMsg::Revoke { principal, action } => revoke(deps, env, info, &principal, &action),
-    ExecuteMsg::RevokeRole { role, action } => deny_role(deps, env, info, &role, &action),
-    ExecuteMsg::AllowRole { role, action } => allow_role(deps, env, info, &role, &action),
-    ExecuteMsg::GrantRoles { principal, roles } => grant_roles(deps, env, info, &principal, &roles),
-    ExecuteMsg::RevokeRoles { principal, roles } => revoke_roles(deps, env, info, &principal, &roles),
+    ExecuteMsg::Allow { principal, action } => allow(deps, env, info, principal, action),
+    ExecuteMsg::Deny { principal, action } => deny(deps, env, info, principal, action),
+    ExecuteMsg::Revoke { principal, action } => revoke(deps, env, info, principal, action),
+    ExecuteMsg::RevokeRole { role, action } => deny_role(deps, env, info, role, action),
+    ExecuteMsg::AllowRole { role, action } => allow_role(deps, env, info, role, action),
+    ExecuteMsg::GrantRoles { principal, roles } => grant_roles(deps, env, info, principal, roles),
+    ExecuteMsg::RevokeRoles { principal, roles } => revoke_roles(deps, env, info, principal, roles),
+    ExecuteMsg::Open { action } => open(deps, env, info, action),
+    ExecuteMsg::Restrict { action } => restrict(deps, env, info, action),
   }
 }
 

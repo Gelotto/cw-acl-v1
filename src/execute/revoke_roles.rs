@@ -1,6 +1,6 @@
 use crate::{
   error::ContractError,
-  state::{is_allowed, ROLES},
+  state::{ensure_sender_is_allowed, ROLES},
 };
 use cosmwasm_std::{attr, Addr, DepsMut, Env, MessageInfo, Response};
 
@@ -8,12 +8,10 @@ pub fn revoke_roles(
   deps: DepsMut,
   _env: Env,
   info: MessageInfo,
-  principal: &Addr,
-  roles: &Vec<String>,
+  principal: Addr,
+  roles: Vec<String>,
 ) -> Result<Response, ContractError> {
-  if !is_allowed(&deps.as_ref(), &info.sender, "revoke_roles")? {
-    return Err(ContractError::NotAuthorized {});
-  }
+  ensure_sender_is_allowed(&deps.as_ref(), &info.sender, "revoke_roles")?;
 
   deps
     .api

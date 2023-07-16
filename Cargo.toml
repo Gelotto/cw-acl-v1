@@ -1,8 +1,8 @@
 [package]
 name = "cw-acl"
-version = "0.0.3"
+version = "0.0.4"
 authors = []
-edition = "2018"
+edition = "2021"
 description = "General Purpose ACL Smart Contract"
 license = "Apache-2.0"
 repository = ""
@@ -28,12 +28,12 @@ codegen-units = 1
 incremental = false
 
 [dependencies]
-cosmwasm-schema = { version = "1.1.0" }
+cosmwasm-schema = { version = "1.2.4" }
+cosmwasm-std = { version = "1.2.4" }
 cw-utils = { version = "1.0.1" }
 cw2 = { version = "1.0.1" }
 cw20 = { version = "1.0.1" }
 cw-storage-plus = { version = "1.0.1" }
-cosmwasm-std = { version = "1.1.0" }
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.23" }

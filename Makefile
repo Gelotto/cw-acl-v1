@@ -15,7 +15,7 @@ deploy:
 
 # instantiate last contract to be deployed using code ID in release dir code-id file
 instantiate:
-	./bin/instantiate $(network) $(sender) $(tag)
+	./bin/instantiate $(network) $(sender) $(tag) $(label)
 
 # run all unit tests
 test:
@@ -31,6 +31,12 @@ validator:
 
 allow:
 	./client.sh allow $(network) $(tag) $(sender) $(principal) $(action)
+
+allow-role:
+	./client.sh allow-role $(network) $(tag) $(sender) $(role) $(action)
+
+grant-role:
+	./client.sh grant-role $(network) $(tag) $(sender) $(principal) $(role)
 
 is-authorized:
 	./client.sh is-authorized $(network) $(tag) $(sender) $(principal) $(action)

@@ -1,16 +1,18 @@
 use std::collections::HashSet;
 
 use crate::client::Acl;
+use crate::error::ContractError;
 use crate::msg::InstantiateMsg;
-use crate::{error::ContractError, models::Admin};
 use cosmwasm_std::{Addr, Deps, DepsMut, Env, MessageInfo, Storage};
+use cw_lib::models::Owner;
 use cw_storage_plus::{Item, Map};
 
-pub const ADMIN: Item<Admin> = Item::new("admin");
-pub const ACL: Map<(Addr, String), bool> = Map::new("acl");
+pub const OWNER: Item<Owner> = Item::new("owner");
+pub const ALLOWED_ACTIONS: Map<(Addr, String), bool> = Map::new("allowed_actions");
+pub const PUBLIC_ACTIONS: Map<String, bool> = Map::new("public_actions");
+pub const ACTIONS: Map<String, u32> = Map::new("actions");
 pub const ROLE_ACTIONS: Map<String, HashSet<String>> = Map::new("role_actions");
 pub const ROLES: Map<Addr, HashSet<String>> = Map::new("roles");
-pub const ACTIONS: Map<String, u32> = Map::new("actions");
 
 /// Initialize contract state data.
 pub fn initialize(
@@ -19,13 +21,13 @@ pub fn initialize(
   _info: &MessageInfo,
   msg: &InstantiateMsg,
 ) -> Result<(), ContractError> {
-  ADMIN.save(deps.storage, &msg.admin)?;
+  OWNER.save(deps.storage, &msg.owner)?;
 
   // perform initial ACL authorizations
   if let Some(authorizations) = msg.authorizations.clone() {
     for auth in authorizations.iter() {
       for action in auth.actions.iter() {
-        ACL.save(deps.storage, (auth.principal.clone(), action.clone()), &true)?;
+        ALLOWED_ACTIONS.save(deps.storage, (auth.principal.clone(), action.clone()), &true)?;
         increment_action_counter(deps.storage, action)?;
       }
     }
@@ -34,18 +36,24 @@ pub fn initialize(
   Ok(())
 }
 
-pub fn is_allowed(
+/// Helper function that returns true if given wallet (principal) is authorized
+/// by ACL to the given action.
+pub fn ensure_sender_is_allowed(
   deps: &Deps,
   principal: &Addr,
   action: &str,
-) -> Result<bool, ContractError> {
-  Ok(match ADMIN.load(deps.storage)? {
-    Admin::Owner(owner_addr) => *principal == owner_addr,
-    Admin::Acl(acl_addr) => {
+) -> Result<(), ContractError> {
+  if !match OWNER.load(deps.storage)? {
+    Owner::Address(addr) => *principal == addr,
+    Owner::Acl(acl_addr) => {
       let acl = Acl::new(&acl_addr);
       acl.is_allowed(&deps.querier, principal, action)?
     },
-  })
+  } {
+    Err(ContractError::NotAuthorized {})
+  } else {
+    Ok(())
+  }
 }
 
 pub fn increment_action_counter(

@@ -3,8 +3,8 @@ use cw_lib::{loader::StateLoader, pagination::paginate_map};
 
 use crate::{
   error::ContractError,
-  msg::{SelectResponse, WalletSelectData},
-  state::{ACL, ACTIONS, ADMIN, ROLES, ROLE_ACTIONS},
+  msg::{Account, SelectResponse},
+  state::{ACTIONS, ALLOWED_ACTIONS, OWNER, ROLES, ROLE_ACTIONS},
 };
 
 pub fn select(
@@ -12,11 +12,12 @@ pub fn select(
   fields: Option<Vec<String>>,
   wallet: Option<Addr>,
 ) -> Result<SelectResponse, ContractError> {
-  let loader = StateLoader::new(deps.storage, &fields);
-  Ok(SelectResponse {
-    admin: loader.get("admin", &ADMIN)?,
+  let loader = StateLoader::new(deps.storage, &fields, &wallet);
 
-    actions: loader.view("actions", || {
+  Ok(SelectResponse {
+    owner: loader.get("admin", &OWNER)?,
+
+    actions: loader.view("actions", |_| {
       Ok(Some(paginate_map(
         &ACTIONS,
         deps.storage,
@@ -28,7 +29,7 @@ pub fn select(
       )?))
     })?,
 
-    roles: loader.view("roles", || {
+    roles: loader.view("roles", |_| {
       Ok(Some(paginate_map(
         &ROLE_ACTIONS,
         deps.storage,
@@ -40,27 +41,31 @@ pub fn select(
       )?))
     })?,
 
-    wallet: loader.view_by_wallet("wallet", wallet, |wallet| {
-      Ok(Some(WalletSelectData {
-        roles: if let Some(roles) = ROLES.may_load(deps.storage, wallet.clone())? {
-          roles.iter().map(|x| -> String { x.clone() }).collect()
-        } else {
-          vec![]
-        },
+    account: loader.view("account", |maybe_wallet| {
+      Ok(if let Some(wallet) = maybe_wallet {
+        Some(Account {
+          roles: if let Some(roles) = ROLES.may_load(deps.storage, wallet.clone())? {
+            roles.iter().map(|x| -> String { x.clone() }).collect()
+          } else {
+            vec![]
+          },
 
-        actions: ACL
-          .prefix(wallet.clone())
-          .range(deps.storage, None, None, Order::Ascending)
-          .filter_map(|result| {
-            if let Ok((action, is_allowed)) = result {
-              if is_allowed {
-                return Some(action);
+          actions: ALLOWED_ACTIONS
+            .prefix(wallet.clone())
+            .range(deps.storage, None, None, Order::Ascending)
+            .filter_map(|result| {
+              if let Ok((action, is_allowed)) = result {
+                if is_allowed {
+                  return Some(action);
+                }
               }
-            }
-            None
-          })
-          .collect(),
-      }))
+              None
+            })
+            .collect(),
+        })
+      } else {
+        None
+      })
     })?,
   })
 }
