@@ -1,40 +1,42 @@
 use crate::{
-  error::ContractError,
-  state::{ensure_sender_is_allowed, increment_action_counter, ALLOWED_ACTIONS},
+    error::ContractError,
+    msg::Principal,
+    state::{
+        create_resource_if_not_exists, ensure_can_execute, IX_PRINCIPAL_RES, IX_RES_PRINCIPAL,
+    },
+    util::validate_path_string,
 };
-use cosmwasm_std::{attr, Addr, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{attr, Response};
+
+use super::Context;
 
 pub fn deny(
-  deps: DepsMut,
-  _env: Env,
-  info: MessageInfo,
-  principal: Addr,
-  action: String,
+    ctx: Context,
+    principal: Principal,
+    paths: Vec<String>,
+    clear: Option<bool>,
 ) -> Result<Response, ContractError> {
-  ensure_sender_is_allowed(&deps.as_ref(), &info.sender, "deny")?;
+    let Context { deps, info, .. } = ctx;
 
-  deps.api.debug(&format!("ACL deny address {} to {}", principal, action));
+    ensure_can_execute(&deps, &info.sender, "/acl/resources/deny")?;
 
-  let mut do_increment = false;
+    let principal_type = principal.as_u8();
+    let principal_id = principal.to_string();
 
-  ALLOWED_ACTIONS.update(
-    deps.storage,
-    (principal.clone(), action.clone()),
-    |maybe_value| -> Result<_, ContractError> {
-      if maybe_value.is_none() {
-        do_increment = true;
-      }
-      Ok(false)
-    },
-  )?;
+    for path in paths.iter() {
+        validate_path_string(path)?;
+        create_resource_if_not_exists(deps.storage, path)?;
+        if clear.unwrap_or(false) {
+            IX_RES_PRINCIPAL.remove(deps.storage, (principal_type, &path, &principal_id));
+            IX_PRINCIPAL_RES.remove(deps.storage, (principal_type, &principal_id, &path));
+        } else {
+            IX_RES_PRINCIPAL.save(deps.storage, (principal_type, &path, &principal_id), &false)?;
+            IX_PRINCIPAL_RES.save(deps.storage, (principal_type, &principal_id, &path), &false)?;
+        }
+    }
 
-  if do_increment {
-    increment_action_counter(deps.storage, &action)?;
-  }
-
-  Ok(Response::new().add_attributes(vec![
-    attr("action", "deny"),
-    attr("principal", principal.to_string()),
-    attr("deny_action", action),
-  ]))
+    Ok(Response::new().add_attributes(vec![
+        attr("action", "deny"),
+        attr("principal", principal.to_string()),
+    ]))
 }

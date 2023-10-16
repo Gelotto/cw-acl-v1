@@ -1,32 +1,29 @@
 use crate::{
-  error::ContractError,
-  state::{ensure_sender_is_allowed, ROLES},
+    error::ContractError,
+    msg::Principal,
+    state::{ensure_can_execute, IX_PRINCIPAL_ROLE},
 };
-use cosmwasm_std::{attr, Addr, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{attr, Response};
+
+use super::Context;
 
 pub fn revoke_roles(
-  deps: DepsMut,
-  _env: Env,
-  info: MessageInfo,
-  principal: Addr,
-  roles: Vec<String>,
+    ctx: Context,
+    principal: Principal,
+    roles: Vec<String>,
 ) -> Result<Response, ContractError> {
-  ensure_sender_is_allowed(&deps.as_ref(), &info.sender, "revoke_roles")?;
+    let Context { deps, info, .. } = ctx;
+    let principal_id = &principal.to_string();
 
-  deps
-    .api
-    .debug(&format!("ACL revoke {:?} roles from {}", roles, principal));
+    ensure_can_execute(&deps, &info.sender, "/acl/roles/revoke")?;
 
-  if let Some(mut stored_roles) = ROLES.may_load(deps.storage, principal.clone())? {
-    roles.iter().for_each(|role| {
-      stored_roles.remove(role);
-    });
-    ROLES.save(deps.storage, principal.clone(), &stored_roles)?;
-  }
+    for role in roles.iter() {
+        // Update lookup table for testing if a principal has a role
+        IX_PRINCIPAL_ROLE.remove(deps.storage, (principal.as_u8(), principal_id, role));
+    }
 
-  Ok(Response::new().add_attributes(vec![
-    attr("action", "revoke_roles"),
-    attr("principal", principal.to_string()),
-    attr("roles", format!("{:?}", roles)),
-  ]))
+    Ok(Response::new().add_attributes(vec![
+        attr("action", "revoke_roles"),
+        attr("principal", principal.to_string()),
+    ]))
 }

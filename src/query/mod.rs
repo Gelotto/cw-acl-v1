@@ -1,11 +1,17 @@
+mod get_principal_resources;
+mod get_principal_roles;
+mod get_resource;
 mod has_roles;
 mod is_allowed;
-mod is_denied;
-mod is_role_allowed;
-mod select;
 
+use cosmwasm_std::{Deps, Env};
+pub use get_principal_resources::get_principal_resources;
+pub use get_principal_roles::get_principal_roles;
+pub use get_resource::get_resource;
 pub use has_roles::has_roles;
 pub use is_allowed::is_allowed;
-pub use is_denied::is_denied;
-pub use is_role_allowed::is_role_allowed;
-pub use select::select;
+
+pub struct ReadonlyContext<'a> {
+    pub deps: Deps<'a>,
+    pub env: Env,
+}

@@ -8,4 +8,10 @@ pub enum ContractError {
 
   #[error("NotAuthorized")]
   NotAuthorized {},
+
+  #[error("UnexpectedError: {reason:?}")]
+  UnexpectedError { reason: Option<String> },
+
+  #[error("ValidationError: {reason:?}")]
+  ValidationError { reason: Option<String> },
 }

@@ -1,16 +1,24 @@
 use crate::{
-  error::ContractError,
-  state::{ensure_sender_is_allowed, PUBLIC_ACTIONS},
+    error::ContractError,
+    state::{ensure_can_execute, UNRESTRICTED_RESOURCES},
+    util::validate_path_string,
 };
-use cosmwasm_std::{attr, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{attr, Response};
 
-pub fn restrict(
-  deps: DepsMut,
-  _env: Env,
-  info: MessageInfo,
-  action: String,
+use super::Context;
+
+pub fn close(
+    ctx: Context,
+    paths: Vec<String>,
 ) -> Result<Response, ContractError> {
-  ensure_sender_is_allowed(&deps.as_ref(), &info.sender, "restrict")?;
-  PUBLIC_ACTIONS.remove(deps.storage, action.clone());
-  Ok(Response::new().add_attributes(vec![attr("action", "restrict"), attr("closed_action", action)]))
+    let Context { deps, info, .. } = ctx;
+
+    ensure_can_execute(&deps, &info.sender, "/acl/resources/close")?;
+
+    for path in paths.iter() {
+        validate_path_string(path)?;
+        UNRESTRICTED_RESOURCES.remove(deps.storage, path);
+    }
+
+    Ok(Response::new().add_attributes(vec![attr("action", "close")]))
 }

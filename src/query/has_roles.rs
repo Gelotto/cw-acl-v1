@@ -1,30 +1,19 @@
-use cosmwasm_std::{Addr, Deps, Storage};
+use cosmwasm_std::Deps;
 
-use crate::{error::ContractError, msg::BooleanResponse, state::ROLES};
+use crate::{error::ContractError, msg::Principal, state::IX_PRINCIPAL_ROLE};
 
 pub fn has_roles(
-  deps: Deps,
-  principal: &Addr,
-  roles: &Vec<String>,
-) -> Result<BooleanResponse, ContractError> {
-  Ok(BooleanResponse {
-    value: compute_has_roles(deps.storage, principal, roles)?,
-  })
-}
-
-fn compute_has_roles(
-  storage: &dyn Storage,
-  principal: &Addr,
-  roles: &Vec<String>,
+    deps: Deps,
+    principal: Principal,
+    roles: Vec<String>,
 ) -> Result<bool, ContractError> {
-  if let Some(stored_roles) = ROLES.may_load(storage, principal.clone())? {
     for role in roles.iter() {
-      if !stored_roles.contains(role) {
-        return Ok(false);
-      }
+        if !IX_PRINCIPAL_ROLE.has(
+            deps.storage,
+            (principal.as_u8(), &principal.to_string(), role),
+        ) {
+            return Ok(false);
+        }
     }
     Ok(true)
-  } else {
-    Ok(false)
-  }
 }

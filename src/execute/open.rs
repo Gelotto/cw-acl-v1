@@ -1,16 +1,23 @@
 use crate::{
-  error::ContractError,
-  state::{ensure_sender_is_allowed, PUBLIC_ACTIONS},
+    error::ContractError,
+    state::{ensure_can_execute, UNRESTRICTED_RESOURCES},
 };
-use cosmwasm_std::{attr, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{attr, Response};
+
+use super::Context;
 
 pub fn open(
-  deps: DepsMut,
-  _env: Env,
-  info: MessageInfo,
-  action: String,
+    ctx: Context,
+    paths: Vec<String>,
 ) -> Result<Response, ContractError> {
-  ensure_sender_is_allowed(&deps.as_ref(), &info.sender, "open")?;
-  PUBLIC_ACTIONS.save(deps.storage, action.clone(), &true)?;
-  Ok(Response::new().add_attributes(vec![attr("action", "revoke"), attr("opened_action", action)]))
+    let Context { deps, info, .. } = ctx;
+
+    ensure_can_execute(&deps, &info.sender, "/acl/resources/open")?;
+
+    for path in paths.iter() {
+        // Indicate that the given path is open to the public
+        UNRESTRICTED_RESOURCES.save(deps.storage, path, &true)?;
+    }
+
+    Ok(Response::new().add_attributes(vec![attr("action", "open")]))
 }

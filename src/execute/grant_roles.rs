@@ -1,48 +1,33 @@
-use std::{collections::HashSet, iter::FromIterator};
-
 use crate::{
-  error::ContractError,
-  state::{ensure_sender_is_allowed, ROLES, ROLE_ACTIONS},
+    error::ContractError,
+    msg::Principal,
+    state::{ensure_can_execute, IX_PRINCIPAL_ROLE},
 };
-use cosmwasm_std::{attr, Addr, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{attr, Response};
+
+use super::Context;
 
 pub fn grant_roles(
-  deps: DepsMut,
-  _env: Env,
-  info: MessageInfo,
-  principal: Addr,
-  roles: Vec<String>,
+    ctx: Context,
+    principal: Principal,
+    roles: Vec<String>,
 ) -> Result<Response, ContractError> {
-  ensure_sender_is_allowed(&deps.as_ref(), &info.sender, "grant_roles")?;
+    let Context { deps, info, .. } = ctx;
+    let principal_id = &principal.to_string();
 
-  deps.api.debug(&format!("ACL grant roles {:?} to {}", roles, principal));
+    ensure_can_execute(&deps, &info.sender, "/acl/roles/grant")?;
 
-  ROLES.update(
-    deps.storage,
-    principal.clone(),
-    |maybe_roles| -> Result<HashSet<String>, ContractError> {
-      if let Some(mut stored_roles) = maybe_roles {
-        roles.iter().for_each(|role| {
-          stored_roles.insert(role.clone());
-        });
-        Ok(stored_roles)
-      } else {
-        Ok(HashSet::from_iter(roles.clone()))
-      }
-    },
-  )?;
+    for role in roles.iter() {
+        // Update lookup table for testing if a principal has a role
+        IX_PRINCIPAL_ROLE.save(
+            deps.storage,
+            (principal.as_u8(), principal_id, &role),
+            &true,
+        )?;
+    }
 
-  for role in roles.iter() {
-    ROLE_ACTIONS.update(
-      deps.storage,
-      role.clone(),
-      |maybe_action_set| -> Result<_, ContractError> { Ok(maybe_action_set.unwrap_or(HashSet::new())) },
-    )?;
-  }
-
-  Ok(Response::new().add_attributes(vec![
-    attr("action", "grant_roles"),
-    attr("principal", principal.to_string()),
-    attr("roles", format!("{:?}", roles)),
-  ]))
+    Ok(Response::new().add_attributes(vec![
+        attr("action", "grant_roles"),
+        attr("principal", principal.to_string()),
+    ]))
 }
